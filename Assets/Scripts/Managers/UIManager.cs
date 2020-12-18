@@ -7,6 +7,7 @@
     public class UIManager : MonoBehaviour
     {
         [SerializeField] GameObject pauseMenu = default;
+        [SerializeField] Text choppedTrunks = default;
 
         void Start()
         {
@@ -20,6 +21,15 @@
 
             //active or deactive pause menu
             pauseMenu.SetActive(active);
+        }
+
+        public void UpdateChoppedTrunks(int number)
+        {
+            if (choppedTrunks == null)
+                return;
+
+            //update text
+            choppedTrunks.text = number.ToString();
         }
     }
 }
