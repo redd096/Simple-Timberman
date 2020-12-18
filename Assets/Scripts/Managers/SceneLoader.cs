@@ -12,7 +12,7 @@
         public void ResumeGame()
         {
             //hide pause menu
-            GameManager.instance.uiManager.PauseMenu(false);
+            //GameManager.instance.uiManager.PauseMenu(false);
 
             //set timeScale to 1
             Time.timeScale = 1;
@@ -28,7 +28,7 @@
         public void PauseGame()
         {
             //show pause menu
-            GameManager.instance.uiManager.PauseMenu(true);
+            //GameManager.instance.uiManager.PauseMenu(true);
 
             //stop time
             Time.timeScale = 0;

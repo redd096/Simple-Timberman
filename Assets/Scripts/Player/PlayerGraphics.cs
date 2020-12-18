@@ -10,9 +10,6 @@ public class PlayerGraphics : MonoBehaviour
     [SerializeField] bool spriteLookRight = false;
     [Tooltip("Position in scene (right, negative is used for left)")] [SerializeField] float xPosition = 1.5f;
 
-    [Header("TimerBar")]
-    [SerializeField] Slider timerSlider = default;
-
     Player player;
     SpriteRenderer spriteRenderer;
     Animator anim;
@@ -38,14 +35,12 @@ public class PlayerGraphics : MonoBehaviour
     {
         player.onTap += OnTap;
         player.onDie += OnDie;
-        player.onUpdateTimer += OnUpdateTimer;
     }
 
     void RemoveEvents()
     {
         player.onTap -= OnTap;
         player.onDie -= OnDie;
-        player.onUpdateTimer -= OnUpdateTimer;
     }
 
     void OnTap(bool rightTap)
@@ -64,12 +59,6 @@ public class PlayerGraphics : MonoBehaviour
     {
         //flip y
         spriteRenderer.flipY = true;
-    }
-
-    void OnUpdateTimer(float value)
-    {
-        //set slider
-        timerSlider.value = value;
     }
 
     #endregion

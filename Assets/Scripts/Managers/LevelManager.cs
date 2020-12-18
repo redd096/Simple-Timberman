@@ -6,120 +6,95 @@ using redd096;
 [AddComponentMenu("TimberMan/Managers/Level Manager")]
 public class LevelManager : MonoBehaviour
 {
-    [Header("Important")]
-    [SerializeField] float startYPosition = -3;
-    [SerializeField] float prefabYSize = 1.2f;
+    [Header("Timer")]
+    [SerializeField] float startingTimer = 5;
+    [SerializeField] int numberOfChopToDecrease = 20;
+    [SerializeField] float decreaseValue = 0.25f;
+    [SerializeField] float minimumValue = 0.5f;
 
-    [Header("Prefabs")]
-    [SerializeField] Trunk trunkPrefab = default;
-    [SerializeField] int numberFirstsNormalTrunks = 5;
-    [SerializeField] List<Trunk> prefabs = new List<Trunk>();
+    float timerMax;
+    float timer;
+    Coroutine timerCoroutine;
 
-    [Header("Pooling")]
-    [SerializeField] int numberInitEveryPooling = 50;
-    [SerializeField] int numberElementsInScene = 50;
+    int choppedTrunks;
+    int previousLimitChop;
 
-    Dictionary<Trunk, Pooling<Trunk>> poolings = new Dictionary<Trunk, Pooling<Trunk>>();
+    int level;
 
-    float yPosition;
-    Queue<Trunk> elementsInScene = new Queue<Trunk>();
-    Trunk lastTrunkInScene;
-
-    void Awake()
+    IEnumerator TimerCoroutine()
     {
-        yPosition = startYPosition;
-
-        //init
-        CreatePoolings();
-        CreateFirstsTrunks();
-
-        //start generate trunks
-        GenerateTrunksInScene();
-    }
-
-    #region awake
-
-    void CreatePoolings()
-    {
-        //be sure there is normal trunk in prefabs
-        if (prefabs.Contains(trunkPrefab) == false)
-            prefabs.Add(trunkPrefab);
-
-        //foreach prefab
-        foreach (Trunk prefab in prefabs)
+        while (true)
         {
-            //create pooling with few elements
-            Pooling<Trunk> pool = new Pooling<Trunk>();
-            pool.Init(prefab, numberInitEveryPooling);
+            //update timer and UI
+            timer -= Time.deltaTime;
+            GameManager.instance.uiManager.UpdateTimer(timer / timerMax);
 
-            //add to dictionary
-            poolings.Add(prefab, pool);
+            //if timer reach 0, player die
+            if (timer <= 0)
+            {
+                GameManager.instance.player.Die(false);
+                GameManager.instance.uiManager.EndMenu(true);
+                break;
+            }
+
+            yield return null;
         }
     }
 
-    void CreateFirstsTrunks()
+    void UpdateChoppedTrunks()
     {
-        //instantiate a few normal trunks
-        for (int i = 0; i < numberFirstsNormalTrunks; i++)
-        {
-            GenerateTrunk(true);
+        //increase chopped trunks and update UI
+        choppedTrunks++;
+        GameManager.instance.uiManager.UpdateChoppedTrunks(choppedTrunks);
 
-            //increase y position
-            yPosition += prefabYSize;
+        //if reached number, decrease timer max
+        if (choppedTrunks >= (previousLimitChop + numberOfChopToDecrease))
+        {
+            timerMax = Mathf.Max(minimumValue, timerMax - decreaseValue);   //clamp to minimum
+            previousLimitChop = choppedTrunks;
+
+            level++;
+            GameManager.instance.uiManager.UpdateLevel(level);
+        }
+
+        //reset timer
+        timer = timerMax;
+    }
+
+    public void PlayerChop(bool rightTap)
+    {
+        //chop tree and update
+        GameManager.instance.treeManager.PlayerChop();
+        UpdateChoppedTrunks();
+
+        //check if player die
+        if (GameManager.instance.treeManager.PlayerDieOnChop(rightTap))
+        {
+            GameManager.instance.player.Die(true);
+            GameManager.instance.uiManager.EndMenu(true);
+
+            //stop timer coroutine
+            if (timerCoroutine != null)
+                StopCoroutine(timerCoroutine);
         }
     }
 
-    void GenerateTrunksInScene()
+    /// <summary>
+    /// Called from canvas (start menu)
+    /// </summary>
+    public void StartGame()
     {
-        //instantiate random prefabs
-        for (int i = 0; i < numberElementsInScene; i++)
-        {
-            GenerateTrunk(false);
+        //remove start menu
+        GameManager.instance.uiManager.StartMenu(false);
 
-            //increase y position
-            yPosition += prefabYSize;
-        }
-    }
+        //set start timer
+        timerMax = startingTimer;
+        timer = timerMax;
 
-    #endregion
+        //start timer coroutine
+        if (timerCoroutine != null)
+            StopCoroutine(timerCoroutine);
 
-    void GenerateTrunk(bool forceNormalTrunk)
-    {
-        //get prefab (normal or random)
-        Trunk prefab = forceNormalTrunk ? trunkPrefab : prefabs[Random.Range(0, prefabs.Count)];
-
-        //be sure is not impossible (if last one kill to right, next one can't kill to left, so put normal trunk between)
-        if(lastTrunkInScene != null)
-        {
-            if ((lastTrunkInScene.KillToRight && prefab.KillToLeft) || (lastTrunkInScene.KillToLeft && prefab.KillToRight))
-                prefab = trunkPrefab;
-        }
-
-        //instantiate prefab at position
-        Trunk trunk = poolings[prefab].Instantiate(prefab, new Vector3(0, yPosition, 0), Quaternion.identity);
-
-        //set last element in scene and add to queue
-        lastTrunkInScene = trunk;
-        elementsInScene.Enqueue(trunk);
-    }
-
-    public bool PlayerDieOnChop(bool rightTap)
-    {
-        //chop trunk - remove from queue and destroy it
-        Trunk choppedTrunk = elementsInScene.Dequeue();
-        Pooling.Destroy(choppedTrunk.gameObject);
-
-        //generate new trunk
-        GenerateTrunk(false);
-
-        //foreach element in scene, move y down
-        foreach (Trunk tr in elementsInScene)
-        {
-            tr.transform.position = new Vector3(tr.transform.position.x, tr.transform.position.y - prefabYSize, tr.transform.position.z);
-        }
-
-        //check if next trunk kill player
-        Trunk nextTrunk = elementsInScene.Peek();
-        return (rightTap && nextTrunk.KillToRight) || (!rightTap && nextTrunk.KillToLeft);
+        timerCoroutine = StartCoroutine(TimerCoroutine());
     }
 }
