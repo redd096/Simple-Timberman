@@ -10,6 +10,8 @@
         [Header("Menu")]
         [SerializeField] GameObject startMenu = default;
         [SerializeField] GameObject endMenu = default;
+        [SerializeField] Text endChoppedText = default;
+        [SerializeField] Text highscoreText = default;
 
         [Header("Important")]
         [SerializeField] Slider timerSlider = default;
@@ -35,10 +37,17 @@
             startMenu.SetActive(active);
         }
 
-        public void EndMenu(bool active)
+        public void EndMenu(bool active, int score, int highscore)
         {
             //end menu
             endMenu.SetActive(active);
+
+            //if active, set text
+            if(active)
+            {
+                endChoppedText.text = "Score: " + score;
+                highscoreText.text = "Highscore: " + highscore;
+            }
         }
 
         public void UpdateTimer(float value)

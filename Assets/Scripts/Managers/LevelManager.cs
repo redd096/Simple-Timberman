@@ -32,8 +32,7 @@ public class LevelManager : MonoBehaviour
             //if timer reach 0, player die
             if (timer <= 0)
             {
-                GameManager.instance.player.Die(false);
-                GameManager.instance.uiManager.EndMenu(true);
+                EndGame(false);
                 break;
             }
 
@@ -70,8 +69,7 @@ public class LevelManager : MonoBehaviour
         //check if player die
         if (GameManager.instance.treeManager.PlayerDieOnChop(rightTap))
         {
-            GameManager.instance.player.Die(true);
-            GameManager.instance.uiManager.EndMenu(true);
+            EndGame(true);
 
             //stop timer coroutine
             if (timerCoroutine != null)
@@ -96,5 +94,20 @@ public class LevelManager : MonoBehaviour
             StopCoroutine(timerCoroutine);
 
         timerCoroutine = StartCoroutine(TimerCoroutine());
+    }
+
+    void EndGame(bool killedByBranch)
+    {
+        //set highscore
+        int highscore = PlayerPrefs.GetInt("Highscore", 0);
+        if(choppedTrunks > highscore)
+        {
+            highscore = choppedTrunks;
+            PlayerPrefs.SetInt("Highscore", highscore);
+        }
+
+        //kill player and show end menu
+        GameManager.instance.player.Die(killedByBranch);
+        GameManager.instance.uiManager.EndMenu(true, choppedTrunks, highscore);
     }
 }

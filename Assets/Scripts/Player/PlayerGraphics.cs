@@ -57,8 +57,11 @@ public class PlayerGraphics : MonoBehaviour
 
     void OnDie(bool killedByBranch)
     {
-        //flip y
-        spriteRenderer.flipY = true;
+        if (killedByBranch)
+        {
+            //flip y
+            spriteRenderer.flipY = true;
+        }
     }
 
     #endregion
