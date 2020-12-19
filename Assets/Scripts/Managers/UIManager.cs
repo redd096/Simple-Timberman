@@ -24,9 +24,6 @@
 
         void Start()
         {
-            //be sure to activate
-            startMenu.SetActive(true);
-
             //be sure to deactivate
             endMenu.SetActive(false);
             levelText.gameObject.SetActive(false);

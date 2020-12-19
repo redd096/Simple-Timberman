@@ -10,6 +10,8 @@
         public TreeManager treeManager { get; private set; }
         public Player player { get; private set; }
 
+        int previousSceneIndex = -1;
+
         protected override void SetDefaults()
         {
             //get references
@@ -17,6 +19,15 @@
             levelManager = FindObjectOfType<LevelManager>();
             treeManager = FindObjectOfType<TreeManager>();
             player = FindObjectOfType<Player>();
+
+            //if restarted same scene, and there is a level manager -> player clicked Restart, so start game immediatly
+            if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == previousSceneIndex && levelManager != null)
+            {
+                levelManager.StartGame();
+            }
+
+            //save previous scene index
+            previousSceneIndex = UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex;
         }
     }
 }
